@@ -7,15 +7,19 @@ using System.Collections.Generic;
 [CanEditMultipleObjects]
 public class CustomTransformInspector : Editor
 {
+    // Unity's built-in editor
     Editor m_DefaultEditor;
 
     void OnEnable()
     {
+        // When this inspector is created, also create the built-in inspector
         m_DefaultEditor = Editor.CreateEditor(targets, System.Type.GetType("UnityEditor.TransformInspector, UnityEditor"));
     }
 
     void OnDisable()
     {
+        // When OnDisable is called, the default editor we created should be destroyed to avoid memory leakage.
+        // Also, make sure to call any required methods like OnDisable
         MethodInfo disableMethod = m_DefaultEditor.GetType().GetMethod("OnDisable", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
         if (disableMethod != null)
         {
@@ -38,7 +42,7 @@ public class CustomTransformInspector : Editor
             List<DependenciesBrowser.Ref> refs = DependenciesBrowser.GatherRefsForSelection(gos);
             if (refs.Count > 0)
             {
-                refs.Sort((a, b) => string.Compare(a.name, b.name));
+                refs.Sort((a, b) => string.Compare(a.displayName, b.displayName));
                 DependenciesBrowser.DrawInspector(refs, false);
             }
         }
@@ -50,15 +54,19 @@ public class CustomTransformInspector : Editor
 [CanEditMultipleObjects]
 public class CustomRectTransformInspector : Editor
 {
+    // Unity's built-in editor
     Editor m_DefaultEditor;
 
     void OnEnable()
     {
+        // When this inspector is created, also create the built-in inspector
         m_DefaultEditor = CreateEditor(targets, Assembly.GetAssembly(typeof(Editor)).GetType("UnityEditor.RectTransformEditor"));
     }
 
     void OnDisable()
     {
+        // When OnDisable is called, the default editor we created should be destroyed to avoid memory leakage.
+        // Also, make sure to call any required methods like OnDisable
         MethodInfo disableMethod = m_DefaultEditor.GetType().GetMethod("OnDisable", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
         if (disableMethod != null)
         {
@@ -81,7 +89,7 @@ public class CustomRectTransformInspector : Editor
             List<DependenciesBrowser.Ref> refs = DependenciesBrowser.GatherRefsForSelection(gos);
             if (refs.Count > 0)
             {
-                refs.Sort((a, b) => string.Compare(a.name, b.name));
+                refs.Sort((a, b) => string.Compare(a.displayName, b.displayName));
                 DependenciesBrowser.DrawInspector(refs, false);
             }
         }

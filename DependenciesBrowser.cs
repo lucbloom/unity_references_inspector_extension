@@ -6,12 +6,23 @@ public class DependenciesBrowser : EditorWindow
 {
     public class Ref
     {
-        public string name;
+        public string script;
+        public string component;
+        public string memberName;
+        public string displayName;
         public Object obj;
-        public Ref(string n, Object o) { name = n; obj = o; }
+        public Ref(string s, string mn, string dn, string c, Object o)
+        {
+            script = s;
+            memberName = mn;
+            displayName = dn;
+            component = c;
+            obj = o;
+        }
     };
 
 
+    //static Object m_SelectedObject;
     List<Ref> m_ReferencingObjects;
     List<Ref> m_ReferencedObjects;
     Vector2 m_ScrollPos;
@@ -21,6 +32,7 @@ public class DependenciesBrowser : EditorWindow
     [MenuItem("Window/General/Dependencies Browser")]
     static void Init()
     {
+        // Get existing open window or if none, make a new one:
         DependenciesBrowser window = (DependenciesBrowser)EditorWindow.GetWindow(typeof(DependenciesBrowser));
         window.Show();
 
@@ -60,7 +72,7 @@ public class DependenciesBrowser : EditorWindow
                             (objectsToCheck == null || objectsToCheck.Contains(sp.objectReferenceValue)))
                         {
                             Object subject = objectsToCheck == null ? sp.objectReferenceValue : go;
-                            refs.Add(new Ref(string.Concat(sp.propertyPath, " (", sp.displayName, ")"), subject));
+                            refs.Add(new Ref(co.GetType().ToString(), sp.propertyPath, sp.displayName, sp.objectReferenceValue.GetType().ToString(), subject));
                         }
                     }
                 }
@@ -86,25 +98,31 @@ public class DependenciesBrowser : EditorWindow
         m_ReferencingObjects = GatherRefsForSelection(Selection.objects);
         m_ReferencedObjects = GatherRefsForList(Selection.objects, null);
 
-        m_ReferencedObjects.Sort((a, b) => string.Compare(a.name, b.name));
-        m_ReferencingObjects.Sort((a, b) => string.Compare(a.name, b.name));
+        m_ReferencedObjects.Sort((a, b) => string.Compare(a.displayName, b.displayName));
+        m_ReferencingObjects.Sort((a, b) => string.Compare(a.displayName, b.displayName));
     }
 
     static public void DrawInspector(List<DependenciesBrowser.Ref> refs, bool header)
     {
         foreach (Ref r in refs)
         {
-            if (header)
+            if (!header)
             {
-                Rect position = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
-                EditorGUI.SelectableLabel(position, r.name);
                 EditorGUILayout.ObjectField(r.obj, typeof(Object));
             }
-            else
+
+            EditorGUILayout.TextField("Class Member", $"{r.script}.{r.memberName}", GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight));
+            EditorGUILayout.TextField("Display Name", r.displayName, GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight));
+            EditorGUILayout.TextField("Referenced Component", r.component, GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight));
+
+            if (header)
             {
                 EditorGUILayout.ObjectField(r.obj, typeof(Object));
-                Rect position = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
-                EditorGUI.SelectableLabel(position, r.name);
+            }
+
+            if (refs.IndexOf(r) != refs.Count-1)
+            {
+                EditorGUILayout.Space(); EditorGUILayout.Space();
             }
         }
     }
