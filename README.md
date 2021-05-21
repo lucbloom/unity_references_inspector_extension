@@ -7,3 +7,5 @@ For instance, a button without an onClick assigned in the properties, but refere
 With this extension, you can find that View Controller, because it has a reference to that button.
 
 Another great use is as an alternative way to quickly jump between objects without having to scroll through the tree.
+
+In my opinion this should be a built-in feature in Unity. If you know how to make that happen, let me know!
