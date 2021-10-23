@@ -1,6 +1,9 @@
-﻿using UnityEngine;
+﻿#if UNITY_EDITOR
+using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
+using UnityEditor.SceneManagement;
+using System.Linq;
 
 public class DependenciesBrowser : EditorWindow
 {
@@ -33,7 +36,7 @@ public class DependenciesBrowser : EditorWindow
     static void Init()
     {
         // Get existing open window or if none, make a new one:
-        DependenciesBrowser window = (DependenciesBrowser)EditorWindow.GetWindow(typeof(DependenciesBrowser));
+        DependenciesBrowser window = (DependenciesBrowser)GetWindow(typeof(DependenciesBrowser));
         window.Show();
 
         Selection.selectionChanged += window.UpdateMe;
@@ -42,25 +45,20 @@ public class DependenciesBrowser : EditorWindow
 
     public static List<Object> GetSubObjectsToCheck(Object obj)
     {
-        List<Object> objectsToCheck = new List<Object>();
-        objectsToCheck.Add(obj);
+        var objectsToCheck = new List<Object>{obj};
         if (obj is GameObject)
         {
-            Component[] components = (obj as GameObject).GetComponents<Component>();
-            foreach (Component co in components)
-            {
-                objectsToCheck.Add(co);
-            }
+            objectsToCheck.AddRange((obj as GameObject).GetComponents<Component>());
         }
         return objectsToCheck;
     }
 
-    public static List<Ref> GatherRefsForList(object[] objects, List<Object> objectsToCheck)
+    public static List<Ref> GatherRefsForList(List<GameObject> objects, List<Object> objectsToCheck)
     {
-        List<Ref> refs = new List<Ref>();
-        foreach (GameObject go in objects)
+        var refs = new List<Ref>();
+        foreach (var go in objects)
         {
-            Component[] components = go.GetComponents<Component>();
+            var components = go.GetComponents<Component>();
             foreach (Component co in components)
             {
                 if (co)
@@ -83,20 +81,25 @@ public class DependenciesBrowser : EditorWindow
 
     public static List<Ref> GatherRefsForSelection<T>(IEnumerable<T> selection)
     {
-        List<Object> objectsToCheck = new List<Object>();
+        var objectsToCheck = new List<Object>();
         foreach (object obj in selection)
         {
             objectsToCheck.Add(obj as Object);
             objectsToCheck.AddRange(GetSubObjectsToCheck(obj as Object));
         }
-        GameObject[] allObjects = FindObjectsOfType<GameObject>();
+
+        var allObjects = FindObjectsOfType<GameObject>().ToList();
+        if (StageUtility.GetCurrentStageHandle() != StageUtility.GetMainStageHandle())
+        {
+            allObjects.AddRange(StageUtility.GetCurrentStageHandle().FindComponentsOfType<Transform>().Select(t => t.gameObject));
+        }
         return GatherRefsForList(allObjects, objectsToCheck);
     }
 
     void UpdateMe()
     {
         m_ReferencingObjects = GatherRefsForSelection(Selection.objects);
-        m_ReferencedObjects = GatherRefsForList(Selection.objects, null);
+        m_ReferencedObjects = GatherRefsForList(Selection.objects.OfType<GameObject>().ToList(), null);
 
         m_ReferencedObjects.Sort((a, b) => string.Compare(a.displayName, b.displayName));
         m_ReferencingObjects.Sort((a, b) => string.Compare(a.displayName, b.displayName));
@@ -111,7 +114,13 @@ public class DependenciesBrowser : EditorWindow
                 EditorGUILayout.ObjectField(r.obj, typeof(Object));
             }
 
+            GUILayout.BeginHorizontal();
             EditorGUILayout.TextField("Class Member", $"{r.script}.{r.memberName}", GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight));
+            if (GUILayout.Button("Copy", GUILayout.Width(50)))
+            {
+                StoryGiant.Extensions.SystemExtensions.SetTextOnClipboard(r.memberName);
+            }
+            GUILayout.EndHorizontal();
             EditorGUILayout.TextField("Display Name", r.displayName, GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight));
             EditorGUILayout.TextField("Referenced Component", r.component, GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight));
 
@@ -159,3 +168,4 @@ public class DependenciesBrowser : EditorWindow
         UpdateMe();
     }
 }
+#endif // UNITY_EDITOR
