@@ -118,7 +118,7 @@ public class DependenciesBrowser : EditorWindow
             EditorGUILayout.TextField("Class Member", $"{r.script}.{r.memberName}", GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight));
             if (GUILayout.Button("Copy", GUILayout.Width(50)))
             {
-                StoryGiant.Extensions.SystemExtensions.SetTextOnClipboard(r.memberName);
+                Mibbon.Extensions.SystemExtensions.SetTextOnClipboard(r.memberName);
             }
             GUILayout.EndHorizontal();
             EditorGUILayout.TextField("Display Name", r.displayName, GUILayout.MaxHeight(EditorGUIUtility.singleLineHeight));
